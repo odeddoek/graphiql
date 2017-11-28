@@ -36,61 +36,59 @@ export default class SearchBox extends React.Component {
 
   render() {
     return (
-      <div>
-        <label className="search-box">
+      <label className="search-box">
+        <input
+          name="searchText"
+          value={this.state.searchText}
+          onChange={this.handleTextChange}
+          type="text"
+          placeholder={this.props.placeholder}
+        />
+        {this.state.value &&
+          <div className="search-box-clear" onClick={this.handleClear}>
+            {'\u2715'}
+          </div>}
+        <div style={{ display: 'inline-block' }}>
           <input
-            name="searchText"
-            value={this.state.searchText}
-            onChange={this.handleTextChange}
-            type="text"
-            placeholder={this.props.placeholder}
+            name="showQueries"
+            id="checkBox"
+            type="checkbox"
+            checked={this.state.showQueries}
+            onChange={this.handleCheckboxChange}
           />
-          {this.state.value &&
-            <div className="search-box-clear" onClick={this.handleClear}>
-              {'\u2715'}
-            </div>}
-          <div style={{ display: 'inline-block' }}>
-            <input
-              name="showQueries"
-              id="checkBox"
-              type="checkbox"
-              checked={this.state.showQueries}
-              onChange={this.handleCheckboxChange}
-            />
-            <span>{'query'}</span>
-          </div>
-          <div style={{ display: 'inline-block' }}>
-            <input
-              name="showMutations"
-              id="checkBox"
-              type="checkbox"
-              checked={this.state.showMutations}
-              onChange={this.handleCheckboxChange}
-            />
-            <span>{'mutation'}</span>
-          </div>
-          <div style={{ display: 'inline-block' }}>
-            <input
-              name="showSubscriptions"
-              id="checkBox"
-              type="checkbox"
-              checked={this.state.showSubscriptions}
-              onChange={this.handleCheckboxChange}
-            />
-            <span>{'subscription'}</span>
-          </div>
-          <div style={{ display: 'inline-block' }}>
-            <input
-              name="showOthers"
-              id="checkBox"
-              type="checkbox"
-              checked={this.state.showOthers}
-              onChange={this.handleCheckboxChange}
-            />
-            <span>{'other'}</span>
-          </div>
-        </label>
-      </div>
+          <span>{'query'}</span>
+        </div>
+        <div style={{ display: 'inline-block' }}>
+          <input
+            name="showMutations"
+            id="checkBox"
+            type="checkbox"
+            checked={this.state.showMutations}
+            onChange={this.handleCheckboxChange}
+          />
+          <span>{'mutation'}</span>
+        </div>
+        <div style={{ display: 'inline-block' }}>
+          <input
+            name="showSubscriptions"
+            id="checkBox"
+            type="checkbox"
+            checked={this.state.showSubscriptions}
+            onChange={this.handleCheckboxChange}
+          />
+          <span>{'subscription'}</span>
+        </div>
+        <div style={{ display: 'inline-block' }}>
+          <input
+            name="showOthers"
+            id="checkBox"
+            type="checkbox"
+            checked={this.state.showOthers}
+            onChange={this.handleCheckboxChange}
+          />
+          <span>{'other'}</span>
+        </div>
+      </label>
     );
   }
 
