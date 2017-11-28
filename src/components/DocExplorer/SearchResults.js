@@ -40,7 +40,7 @@ export default class SearchResults extends React.Component {
     const matchedFields = [];
 
     const typeMap = schema.getTypeMap();
-    let typeNames = Object.keys(typeMap);
+    let typeNames = Object.keys(typeMap).sort();
 
     // Move the within type name to be the first searched.
     if (withinType) {
@@ -67,15 +67,15 @@ export default class SearchResults extends React.Component {
 
       if (type.getFields) {
         const fields = type.getFields();
-        Object.keys(fields).forEach(fieldName => {
+        Object.keys(fields).sort().forEach(fieldName => {
           const field = fields[fieldName];
           let matchingArgs;
 
           if (!isMatch(fieldName, searchValue)) {
             if (field.args && field.args.length) {
-              matchingArgs = field.args.filter(arg =>
-                isMatch(arg.name, searchValue),
-              );
+              matchingArgs = field.args
+                .filter(arg => isMatch(arg.name, searchValue))
+                .sort((a, b) => a.name.localeCompare(b.name));
               if (matchingArgs.length === 0) {
                 return;
               }
