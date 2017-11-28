@@ -28,7 +28,7 @@ export default class SearchResults extends React.Component {
   constructor() {
     super();
     this.renderTypeMatches = this.renderTypeMatches.bind(this);
-    this.renderTypeMatches = this.renderTypeMatches.bind(this);
+    this.renderFieldMatches = this.renderFieldMatches.bind(this);
   }
 
   shouldComponentUpdate(nextProps) {
