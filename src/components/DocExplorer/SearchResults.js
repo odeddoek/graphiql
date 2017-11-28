@@ -202,23 +202,6 @@ export default class SearchResults extends React.Component {
   }
 }
 
-function isSubtype2(rootType, type) {
-  const subTypes = rootType.getFields();
-  const subTypeNames = Object.keys(subTypes);
-
-  console.log('type', type);
-  console.log('subTypes', subTypes);
-  console.log('subTypeNames', subTypeNames);
-  const result = subTypeNames.includes(type.name);
-
-  if (result) {
-    console.log('found match..', type);
-  }
-  throw new Error();
-
-  return result;
-}
-
 function isMatch(sourceText, searchValue) {
   try {
     const escaped = searchValue.replace(/[^_0-9A-Za-z]/g, ch => '\\' + ch);
