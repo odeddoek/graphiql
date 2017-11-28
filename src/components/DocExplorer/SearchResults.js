@@ -16,30 +16,51 @@ export default class SearchResults extends React.Component {
   static propTypes = {
     schema: PropTypes.object,
     withinType: PropTypes.object,
-    searchValue: PropTypes.string,
+    searchText: PropTypes.string,
+    showQueries: PropTypes.bool,
+    showMutations: PropTypes.bool,
+    showSubscriptions: PropTypes.bool,
+    showOthers: PropTypes.bool,
     onClickType: PropTypes.func,
     onClickField: PropTypes.func,
   };
 
+  constructor() {
+    super();
+    this.renderTypeMatches = this.renderTypeMatches.bind(this);
+    this.renderTypeMatches = this.renderTypeMatches.bind(this);
+  }
+
   shouldComponentUpdate(nextProps) {
     return (
       this.props.schema !== nextProps.schema ||
-      this.props.searchValue !== nextProps.searchValue
+      this.props.searchText !== nextProps.searchText ||
+      this.props.showQueries !== nextProps.showQueries ||
+      this.props.showMutations !== nextProps.showMutations ||
+      this.props.showSubscriptions !== nextProps.showSubscriptions ||
+      this.props.showOthers !== nextProps.showOthers
     );
   }
 
   render() {
-    const searchValue = this.props.searchValue;
+    const {
+      searchText,
+      showQueries,
+      showMutations,
+      showSubscriptions,
+      showOthers,
+    } = this.props;
     const withinType = this.props.withinType;
     const schema = this.props.schema;
-    const onClickType = this.props.onClickType;
-    const onClickField = this.props.onClickField;
 
     const matchedWithin = [];
     const matchedTypes = [];
     const matchedFields = [];
 
     const typeMap = schema.getTypeMap();
+    const rootQuery = schema.getQueryType();
+    const rootMutation = schema.getMutationType();
+    const rootSubscription = schema.getSubscriptionType();
     let typeNames = Object.keys(typeMap).sort();
 
     // Move the within type name to be the first searched.
@@ -49,20 +70,32 @@ export default class SearchResults extends React.Component {
     }
 
     for (const typeName of typeNames) {
-      if (
-        matchedWithin.length + matchedTypes.length + matchedFields.length >=
-        100
-      ) {
+      const totalMatches =
+        matchedWithin.length + matchedTypes.length + matchedFields.length;
+
+      if (totalMatches >= 100) {
         break;
       }
 
       const type = typeMap[typeName];
-      if (withinType !== type && isMatch(typeName, searchValue)) {
-        matchedTypes.push(
-          <div className="doc-category-item" key={typeName}>
-            <TypeLink type={type} onClick={onClickType} />
-          </div>,
-        );
+
+      if (!showQueries && typeName === rootQuery.name) {
+        continue;
+      } else if (!showMutations && typeName === rootMutation.name) {
+        continue;
+      } else if (!showSubscriptions && typeName === rootSubscription.name) {
+        continue;
+      } else if (
+        !showOthers &&
+        typeName !== rootQuery.name &&
+        typeName !== rootMutation.name &&
+        typeName !== rootSubscription.name
+      ) {
+        continue;
+      }
+
+      if (withinType !== type && isMatch(typeName, searchText)) {
+        matchedTypes.push({ type, typeName });
       }
 
       if (type.getFields) {
@@ -71,60 +104,32 @@ export default class SearchResults extends React.Component {
           const field = fields[fieldName];
           let matchingArgs;
 
-          if (!isMatch(fieldName, searchValue)) {
-            if (field.args && field.args.length) {
-              matchingArgs = field.args
-                .filter(arg => isMatch(arg.name, searchValue))
-                .sort((a, b) => a.name.localeCompare(b.name));
-              if (matchingArgs.length === 0) {
-                return;
-              }
-            } else {
+          if (!isMatch(fieldName, searchText)) {
+            if (!field.args || !field.args.length) {
+              return;
+            }
+
+            matchingArgs = field.args
+              .filter(arg => isMatch(arg.name, searchText))
+              .sort((a, b) => a.name.localeCompare(b.name));
+            if (matchingArgs.length === 0) {
               return;
             }
           }
 
-          const match = (
-            <div className="doc-category-item" key={typeName + '.' + fieldName}>
-              {withinType !== type && [
-                <TypeLink key="type" type={type} onClick={onClickType} />,
-                '.',
-              ]}
-              <a
-                className="field-name"
-                onClick={event => onClickField(field, type, event)}>
-                {field.name}
-              </a>
-              {matchingArgs && [
-                '(',
-                <span key="args">
-                  {matchingArgs.map(arg =>
-                    <Argument
-                      key={arg.name}
-                      arg={arg}
-                      onClickType={onClickType}
-                      showDefaultValue={false}
-                    />,
-                  )}
-                </span>,
-                ')',
-              ]}
-            </div>
-          );
-
           if (withinType === type) {
-            matchedWithin.push(match);
+            matchedWithin.push({ type, field, withinType, matchingArgs });
           } else {
-            matchedFields.push(match);
+            matchedFields.push({ type, field, withinType, matchingArgs });
           }
         });
       }
     }
 
-    if (
-      matchedWithin.length + matchedTypes.length + matchedFields.length ===
-      0
-    ) {
+    const totalMatches =
+      matchedWithin.length + matchedTypes.length + matchedFields.length;
+
+    if (totalMatches === 0) {
       return (
         <span className="doc-alert-text">
           {'No results found.'}
@@ -135,13 +140,13 @@ export default class SearchResults extends React.Component {
     if (withinType && matchedTypes.length + matchedFields.length > 0) {
       return (
         <div>
-          {matchedWithin}
+          {this.renderFieldMatches(matchedWithin)}
           <div className="doc-category">
             <div className="doc-category-title">
               {'other results'}
             </div>
-            {matchedTypes}
-            {matchedFields}
+            {this.renderTypeMatches(matchedTypes)}
+            {this.renderFieldMatches(matchedFields)}
           </div>
         </div>
       );
@@ -149,12 +154,69 @@ export default class SearchResults extends React.Component {
 
     return (
       <div>
-        {matchedWithin}
-        {matchedTypes}
-        {matchedFields}
+        {this.renderFieldMatches(matchedWithin)}
+        {this.renderTypeMatches(matchedTypes)}
+        {this.renderFieldMatches(matchedFields)}
       </div>
     );
   }
+
+  renderTypeMatches(matches) {
+    return matches.map(({ type, typeName }) =>
+      <div className="doc-category-item" key={typeName}>
+        <TypeLink type={type} onClick={this.props.onClickType} />
+      </div>,
+    );
+  }
+
+  renderFieldMatches(matches) {
+    const { onClickType, onClickField } = this.props.onClickType;
+
+    return matches.map(({ type, field, withinType, matchingArgs }) =>
+      <div className="doc-category-item" key={type.name + '.' + field.name}>
+        {withinType !== type && [
+          <TypeLink key="type" type={type} onClick={onClickType} />,
+          '.',
+        ]}
+        <a
+          className="field-name"
+          onClick={event => onClickField(field, type, event)}>
+          {field.name}
+        </a>
+        {matchingArgs && [
+          '(',
+          <span key="args">
+            {matchingArgs.map(arg =>
+              <Argument
+                key={arg.name}
+                arg={arg}
+                onClickType={this.props.onClickType}
+                showDefaultValue={false}
+              />,
+            )}
+          </span>,
+          ')',
+        ]}
+      </div>,
+    );
+  }
+}
+
+function isSubtype2(rootType, type) {
+  const subTypes = rootType.getFields();
+  const subTypeNames = Object.keys(subTypes);
+
+  console.log('type', type);
+  console.log('subTypes', subTypes);
+  console.log('subTypeNames', subTypeNames);
+  const result = subTypeNames.includes(type.name);
+
+  if (result) {
+    console.log('found match..', type);
+  }
+  throw new Error();
+
+  return result;
 }
 
 function isMatch(sourceText, searchValue) {

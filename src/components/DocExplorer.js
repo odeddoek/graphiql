@@ -79,7 +79,7 @@ export class DocExplorer extends React.Component {
     } else if (navItem.search) {
       content = (
         <SearchResults
-          searchValue={navItem.search}
+          {...navItem.search}
           withinType={navItem.def}
           schema={schema}
           onClickType={this.handleClickTypeOrField}
