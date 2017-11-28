@@ -49,9 +49,9 @@ export default class SearchResults extends React.Component {
       showMutations,
       showSubscriptions,
       showOthers,
+      withinType,
+      schema,
     } = this.props;
-    const withinType = this.props.withinType;
-    const schema = this.props.schema;
 
     const matchedWithin = [];
     const matchedTypes = [];
@@ -95,7 +95,7 @@ export default class SearchResults extends React.Component {
       }
 
       if (withinType !== type && isMatch(typeName, searchText)) {
-        matchedTypes.push({ type, typeName });
+        matchedTypes.push(type);
       }
 
       if (type.getFields) {
@@ -162,8 +162,8 @@ export default class SearchResults extends React.Component {
   }
 
   renderTypeMatches(matches) {
-    return matches.map(({ type, typeName }) =>
-      <div className="doc-category-item" key={typeName}>
+    return matches.map(type =>
+      <div className="doc-category-item" key={type.name}>
         <TypeLink type={type} onClick={this.props.onClickType} />
       </div>,
     );
